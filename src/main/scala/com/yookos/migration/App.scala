@@ -44,6 +44,8 @@ object App extends App {
 
   val system = SparkEnv.get.actorSystem
   
+  createSchema(conf)
+
   implicit val formats = DefaultFormats
   
   val keyspace = Config.cassandraConfig(mode, Some("keyspace"))
@@ -74,7 +76,7 @@ object App extends App {
   private def reduce(df: DataFrame) = {
     df.collect().foreach(row => {
       val yookoreid = row.getString(1)
-      profiles.filter(csp => csp.userid == yookoreid).map {
+      profiles.filter(csp => csp.userid == yookoreid).foreach {
         profile =>
           cachedIndex = cachedIndex + 1
           cache.set("latest_legacy_workprofiles_index", cachedIndex.toString)
@@ -140,6 +142,7 @@ object App extends App {
   mappingsDF.printSchema()
   
   def createSchema(conf: SparkConf): Boolean = {
+    val keyspace = Config.cassandraConfig(mode, Some("keyspace"))
     val replicationStrategy = Config.cassandraConfig(mode, Some("replStrategy"))
     CassandraConnector(conf).withSessionDo { sess =>
       sess.execute(s"CREATE KEYSPACE IF NOT EXISTS $keyspace WITH REPLICATION = $replicationStrategy")

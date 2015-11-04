@@ -55,7 +55,10 @@ object Config {
       conf.set("spark.logConf", "true")
       conf.set("spark.akka.logLifecycleEvents", "true")
       conf.set("spark.driver.allowMultipleContexts", "true")
-      conf.set("spark.cassandra.connection.host", "localhost")
+      //conf.set("spark.cassandra.connection.host", "localhost")
+      conf.set("spark.cassandra.connection.host", "192.168.10.200")
+      conf.set("spark.cassandra.auth.username", "cassandra")
+      conf.set("spark.cassandra.auth.password", "cassandra")
 
     case "sandbox" => 
       val driverPort = 7077
@@ -149,8 +152,10 @@ object Config {
   def dataSourceUrl(env: String, name: Option[String]): String = env match {
     case "local" => 
       val dbSourceName = name.getOrElse("")
-      val mappings = s"jdbc:postgresql://localhost:5432/uaa?user=root&password=P@ssw0rd15"
-      val legacy = s"jdbc:postgresql://localhost:5432/uaa?user=root&password=P@ssw0rd15"
+      //val mappings = s"jdbc:postgresql://localhost:5432/uaa?user=root&password=P@ssw0rd15"
+      //val legacy = s"jdbc:postgresql://localhost:5432/uaa?user=root&password=P@ssw0rd15"
+      val mappings = s"jdbc:postgresql://10.10.10.227:5432/uaa?user=postgres&password=postgres"
+      val legacy = s"jdbc:postgresql://192.168.10.225:5432/yookos?user=postgres&password=postgres"
       if (dbSourceName == "mappings") mappings else legacy
 
     case "dev" => 
