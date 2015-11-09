@@ -13,7 +13,7 @@ object Config {
   // if env var HOSTNAME is set to sandbox, then it's staging
   // if VCAP_APPLICATION env var is set, then it's CF
   // else local
-  val env = Map("sandbox" -> System.getenv("HOSTNAME"), "cf" -> System.getenv("VCAP_APPLICATION"))
+  val env = Map("sandbox" -> System.getenv("HOSTNAME"), "cf" -> System.getenv("VCAP_APPLICATION"), "yarn" -> System.getenv("YARN_HOME"))
 
   println("====VCAP_APPLICATION====\n " + env.get("cf"))
 
@@ -107,6 +107,27 @@ object Config {
       conf.set("spark.cassandra.auth.username", "cassandra")
       conf.set("spark.cassandra.auth.password", "Gonzo@7072")
 
+    case "yarn" =>
+      println("===Running directly on Spark master mode===")
+      val driverPort = 7077
+      val driverHost = "192.168.121.160"
+      conf.setAppName("Legacy Files Migration")
+      conf.setMaster("yarn-client")
+      conf.set("spark.logConf", "true")
+      conf.set("spark.akka.logLifecycleEvents", "true")
+      //conf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+      //conf.set("spark.kryoserializer.buffer.max", "1024m")
+      //conf.set("spark.driver.allowMultipleContexts", "true")
+      conf.set("spark.yarn.am.cores", "2")
+      //conf.set("spark.driver.maxResultSize", "0")
+      conf.set("spark.executor.memory", "5g") //12g
+      conf.set("spark.executor.cores", "8") // 8
+      conf.set("spark.executor.instances", "6") //13
+      conf.set("spark.yarn.access.namenodes", "hdfs://yks-hadoop-m01:8032")
+      conf.set("spark.cassandra.connection.host", "192.168.121.174")
+      conf.set("spark.cassandra.auth.username", "cassandra")
+      conf.set("spark.cassandra.auth.password", "Gonzo@7072")
+
     case "production" =>
       conf.setAppName("Yookore Legacy Work Profiles")
       conf.setMaster("yarn-client")
@@ -147,6 +168,15 @@ object Config {
       jedisClusterNodes.add(new HostAndPort("192.168.121.167", 6379))
       val jc = new JedisCluster(jedisClusterNodes);
       jc
+    
+    case "yarn" =>
+      val jedisClusterNodes = new java.util.HashSet[HostAndPort]
+      //val jedisClusterNodes = Set[HostAndPort]()
+      jedisClusterNodes.add(new HostAndPort("192.168.121.165", 6379))
+      jedisClusterNodes.add(new HostAndPort("192.168.121.166", 6379))
+      jedisClusterNodes.add(new HostAndPort("192.168.121.167", 6379))
+      val jc = new JedisCluster(jedisClusterNodes);
+      jc
   }
 
   def dataSourceUrl(env: String, name: Option[String]): String = env match {
@@ -171,6 +201,12 @@ object Config {
       if (dbSourceName == "mappings") mappings else legacy
     
     case "beta" =>
+      val dbSourceName = name.getOrElse("")
+      val mappings = s"jdbc:postgresql://192.168.121.178:5432/uaa?user=postgres&password=postgres"
+      val legacy = s"jdbc:postgresql://192.168.121.164:5432/Yookos?user=postgres&password=postgres"
+      if (dbSourceName == "mappings") mappings else legacy
+    
+    case "yarn" =>
       val dbSourceName = name.getOrElse("")
       val mappings = s"jdbc:postgresql://192.168.121.178:5432/uaa?user=postgres&password=postgres"
       val legacy = s"jdbc:postgresql://192.168.121.164:5432/Yookos?user=postgres&password=postgres"

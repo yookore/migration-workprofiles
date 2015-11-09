@@ -44,6 +44,10 @@ object App extends App {
 
   val system = SparkEnv.get.actorSystem
   
+  if (mode == "yarn") {
+    sc.addJar("hdfs:///user/hadoop-user/data/jars/postgresql-9.4-1200-jdbc41.jar")
+    sc.addJar("hdfs:///user/hadoop-user/data/jars/migration-workprofiles-0.1-SNAPSHOT.jar")
+  }
   createSchema(conf)
 
   implicit val formats = DefaultFormats
@@ -73,8 +77,8 @@ object App extends App {
 
   reduce(df)
 
-  private def reduce(df: DataFrame) = {
-    df.collect().foreach(row => {
+  private def reduce(mdf: DataFrame) = {
+    mdf.collect().foreach(row => {
       val yookoreid = row.getString(1)
       profiles.filter(csp => csp.userid == yookoreid).foreach {
         profile =>
@@ -87,31 +91,79 @@ object App extends App {
   }
 
   private def upsert(row: Row, profile: Work, jiveuserid: Long) = {
-    legacyDF.select(legacyDF("fieldid"), legacyDF("value"), legacyDF("userid")).filter(f"userid = $jiveuserid%d").foreach {
+    legacyDF.select(legacyDF("fieldid"), legacyDF("value"), legacyDF("userid")).filter(f"userid = $jiveuserid%d").collect().map {
         profileRow =>
           val fieldid = profileRow.getInt(0)
           val value = profileRow.getString(1)
-          val department = p(fieldid, value).get("department")
-          val startdate = p(fieldid, value).get("hiredate")
           val userid = row.getString(1)
-          val expertise = p(fieldid, value).get("expertise")
-          val company = p(fieldid, value).get("company")
-          val jobtitle = p(fieldid, value).get("jobtitle")
-          val address = p(fieldid, value).get("address")
           val username = profile.username
           val creationdate = profile.creationdate
           val lastupdated = profile.lastupdated
+         
+          fieldid match {
+            case 2 =>
+              println(f"==fieldid:$fieldid%d and value:$value==")
+              val department = Some(value)
+              save(Seq(Work(department, creationdate,
+                lastupdated, Some(null), username,
+                userid, Some(null), Some(null),
+                Some(null), Some(null))))
+
+            case 7 =>
+              println(f"==fieldid:$fieldid%d and value:$value==")
+              val startdate = Some(value)
+              save(Seq(Work(Some(null), creationdate,
+                lastupdated, startdate, username,
+                userid, Some(null), Some(null),
+                Some(null), Some(null))))
+
+            // expertise
+            case 9 =>
+              println(f"==fieldid:$fieldid%d and value:$value==")
+              val expertise = Some(value)
+              save(Seq(Work(Some(null), creationdate,
+                lastupdated, Some(null), username,
+                userid, expertise, Some(null), Some(null),
+                Some(null))))
+
+            case 5015 =>
+              println(f"==fieldid:$fieldid%d and value:$value==")
+              val company = Some(value)
+              save(Seq(Work(Some(null), creationdate,
+                lastupdated, Some(null), username,
+                userid, Some(null), company, 
+                Some(null), Some(null))))
+
+            case 5019 =>
+              println(f"==fieldid:$fieldid%d and value:$value==")
+              val jobtitle = Some(value)
+              save(Seq(Work(Some(null), creationdate,
+                lastupdated, Some(null), username,
+                userid, Some(null), Some(null),
+                jobtitle, Some(null))))
+
+            case 11 =>
+              println(f"==fieldid:$fieldid%d and value:$value==")
+              val address = Some(value)
+              save(Seq(Work(Some(null), creationdate,
+                lastupdated, Some(null), username,
+                userid, Some(null), Some(null),
+                Some(null), address)))
+          }
           
-          sc.parallelize(Seq(Work(
-            department, creationdate, lastupdated, startdate, 
-            username, userid, expertise, company, jobtitle, address)))
-              .saveToCassandra(s"$keyspace", "legacyworkprofiles", 
-                SomeColumns("department", "creationdate", "lastupdated",
-                  "hiredate", "username", "userid",
-                  "expertise", "company", "jobtitle", "address")
-          )
           println("===Latest workprofiles cachedIndex=== " + cache.get("latest_legacy_workprofiles_index").toInt)
       }
+  }
+
+  private def save(workprofile: Seq[Work]) = workprofile match {
+    case Nil => println("Nil")
+    case List(w @ _*) => 
+      sc.parallelize(workprofile)
+        .saveToCassandra(s"$keyspace", "legacyworkprofiles", 
+          SomeColumns("department", "creationdate",
+            "lastupdated", "hiredate", "username", "userid",
+            "expertise", "company", "jobtitle", "address")
+        )
   }
 
   def p(field: Int, value: String): Map[String, String] = field match {
