@@ -55,10 +55,10 @@ object Config {
       conf.set("spark.logConf", "true")
       conf.set("spark.akka.logLifecycleEvents", "true")
       conf.set("spark.driver.allowMultipleContexts", "true")
-      //conf.set("spark.cassandra.connection.host", "localhost")
-      conf.set("spark.cassandra.connection.host", "192.168.10.200")
-      conf.set("spark.cassandra.auth.username", "cassandra")
-      conf.set("spark.cassandra.auth.password", "cassandra")
+      conf.set("spark.cassandra.connection.host", "localhost")
+      //conf.set("spark.cassandra.connection.host", "192.168.10.200")
+      //conf.set("spark.cassandra.auth.username", "cassandra")
+      //conf.set("spark.cassandra.auth.password", "cassandra")
 
     case "sandbox" => 
       val driverPort = 7077
