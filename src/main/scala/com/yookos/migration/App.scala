@@ -71,7 +71,6 @@ object App extends App {
   )
   
   val profiles = sc.cassandraTable[Work](s"$keyspace", "legacyworkprofiles").cache()
-  val totalProfiles = profiles.cache().cassandraCount()
 
   val df = mappingsDF.select(mappingsDF("userid"), mappingsDF("yookoreid"))
 
@@ -80,7 +79,7 @@ object App extends App {
   private def reduce(mdf: DataFrame) = {
     mdf.collect().foreach(row => {
       val yookoreid = row.getString(1)
-      profiles.filter(csp => csp.userid == yookoreid).foreach {
+      profiles.filter(csp => csp.userid == yookoreid).collect().foreach {
         profile =>
           cachedIndex = cachedIndex + 1
           cache.set("latest_legacy_workprofiles_index", cachedIndex.toString)

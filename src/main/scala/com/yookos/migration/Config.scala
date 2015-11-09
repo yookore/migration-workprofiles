@@ -26,8 +26,6 @@ object Config {
       Some("sandbox").get
     }
     else if(cf != Some(null)) {
-      //val vcap = JSON.parseFull(Some(cf).get.asInstanceOf[String])
-      //val m = parse(cf.get.toString).extract[Map[String, String]]
       val m = JSON.parseFull(cf.get).get.asInstanceOf[Map[String, String]]
       println("===mappedJson===: " + m)
       val spaceName = m.get("space_name").get
@@ -243,6 +241,13 @@ object Config {
       }
 
     case "beta" =>
+      val param = name.getOrElse("")
+      param match {
+        case "keyspace" => s"yookos_migration"
+        case "replStrategy" => "{'class': 'NetworkTopologyStrategy', 'DC1': 3}"
+      }
+    
+    case "yarn" =>
       val param = name.getOrElse("")
       param match {
         case "keyspace" => s"yookos_migration"

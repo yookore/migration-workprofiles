@@ -30,7 +30,7 @@
     <dependency>
       <groupId>com.typesafe.akka</groupId>
       <artifactId>akka-actor_2.10</artifactId>
-      <version>2.3.4</version>
+      <version>2.3.11</version>
     </dependency>
     <dependency>
       <groupId>org.apache.spark</groupId>
@@ -74,11 +74,11 @@
       <version>3.0</version>
     </dependency>
     <dependency>
-        <groupId>redis.clients</groupId>
-        <artifactId>jedis</artifactId>
-        <version>2.7.3</version>
-        <type>jar</type>
-        <scope>compile</scope>
+      <groupId>redis.clients</groupId>
+      <artifactId>jedis</artifactId>
+      <version>2.7.3</version>
+      <type>jar</type>
+      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.postgresql</groupId>
